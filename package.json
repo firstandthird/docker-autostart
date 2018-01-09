@@ -1,0 +1,21 @@
+{
+  "name": "docker-autostart",
+  "private": "true",
+  "homepage": "https://github.com/firstandthird/docker-autostart#readme",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firstandthird/docker-autostart.git"
+  },
+  "author": "First+Third",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/firstandthird/docker-autostart/issues"
+  },
+  "dependencies": {
+    "wreck": "^14.0.2"
+  }
+}
