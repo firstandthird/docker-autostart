@@ -1,5 +1,14 @@
 const http = require('http');
 const wreck = require('wreck');
+const Logr = require('logr');
+const log = Logr.createLogger({
+  type: 'flat',
+  reporters: {
+    flat: {
+      reporter: require('logr-flat')
+    }
+  }
+});
 
 const deployLog = {};
 
@@ -7,6 +16,8 @@ const deployKey = process.env.DEPLOY_KEY;
 const deployEndpoint = process.env.ENDPOINT;
 const debug = process.env.DEBUG || false;
 const jsonFile = process.env.JSON_FILE;
+
+
 if (!jsonFile) {
   throw new Error('Must provide a json mapping file');
 }
@@ -54,36 +65,34 @@ const server = http.createServer((req, res) => {
     }
 
     const deployKey = `${service.name}_${branch}`
-    console.log(deployKey);
     if (deployLog[deployKey]) {
       const now = new Date().getTime() - (5 * 60 * 1000);
       if (now < deployLog[deployKey]) {
-        console.log(`${service.name}/${branch} already deploying.`);
+        log(['docker-autobuild', 'info'], `${service.name}/${branch} already deploying.`);
         return;
       }
     }
 
     deployLog[deployKey] = new Date().getTime();
 
-    console.log(`Deploying: ${repo}/${branch}`);
-    console.log(service);
+    log(['docker-autobuild', 'info'], `Deploying: ${repo}/${branch}`);
     if (debug) {
-      return
+      return;
     }
     wreck.post(service.endpoint, {
       payload: service.payload,
     }, (err, res, payload) => {
       if (err) {
-        console.error(err);
+        log(['docker-autobuild', 'error'], { err });
       } else {
-        console.log(payload.toString());
+        log(['docker-autobuild', 'info'], payload.toString());
       }
     });
 
   });
 
   if (!match) {
-    console.log(`No match for ${host}`);
+    log(['docker-autobuild', 'info'], `No match for ${host}`);
   }
 
   res.statusCode = 503

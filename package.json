@@ -11,11 +11,13 @@
     "url": "git+https://github.com/firstandthird/docker-autostart.git"
   },
   "author": "First+Third",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/firstandthird/docker-autostart/issues"
   },
   "dependencies": {
+    "logr": "^2.7.0",
+    "logr-flat": "^3.1.0",
     "wreck": "^14.0.2"
   }
 }
