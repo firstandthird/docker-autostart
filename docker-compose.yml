@@ -9,7 +9,7 @@ proxy:
     - /dev/null:/traefik.toml
 
 web:
-  image: 'ecwillis/node:8.9-2-dev'
+  image: 'firstandthird/node:8.9-2-dev'
   volumes:
     - './:/home/app/src'
   environment:
