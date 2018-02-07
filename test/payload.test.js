@@ -1,14 +1,17 @@
+const Rapptor = require('rapptor');
 const tap = require('tap');
-const startServer = require('../');
+const path = require('path');
 
 process.env.ENDPOINT = '/payload';
+const workDir = path.resolve(__dirname, '../');
 
-tap.test('gathers string configurations correctly', async (t) => {
-  const rapptor = await startServer();
+let rapptor;
+const start = async function() {
+  rapptor = new Rapptor({
+    cwd: workDir
+  });
 
-  rapptor.server.settings.app.hosts = {
-    apple: 'apple'
-  };
+  await rapptor.setup();
 
   rapptor.server.route({
     method: 'post',
@@ -18,60 +21,34 @@ tap.test('gathers string configurations correctly', async (t) => {
     }
   });
 
-  const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'apple-branch-one.localhost' } });
-  t.equals(result.statusCode, 503);
+  await rapptor.start();
+
+  return true;
+};
+
+const stop = async function() {
   await rapptor.stop();
-  t.end();
-});
+
+  return true;
+};
+
 
 tap.test('gathers object confgurations', async (t) => {
-  const rapptor = await startServer();
-
-  rapptor.server.settings.app.hosts = {
-    apple: {
-      name: 'apple-web'
-    }
-  };
-
-  rapptor.server.route({
-    method: 'post',
-    path: '/payload',
-    handler(request, h) {
-      return request.payload;
-    }
-  });
+  await start();
 
   const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'apple-branch-one.localhost' } });
+
   t.equal(result.statusCode, 503);
 
-  await rapptor.stop();
+  await stop();
   t.end();
 });
 
 tap.test('objects are augemented with deep clone', async (t) => {
-  const rapptor = await startServer();
-
-  rapptor.server.settings.app.hosts = {
-    pear: {
-      name: 'pear-api',
-      extra: true,
-      vars: {
-        more: 'values'
-      }
-    }
-  };
-
-  rapptor.server.route({
-    method: 'post',
-    path: '/payload',
-    handler(request, h) {
-      return request.payload;
-    }
-  });
-
+  await start();
   const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'pear-branch-one.localhost' } });
   t.equal(result.statusCode, 503);
 
-  await rapptor.stop();
+  await stop();
   t.end();
 });

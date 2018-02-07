@@ -1,8 +1,0 @@
-service:
-  endpoint: '{{ ENV.ENDPOINT }}'
-  payload:
-    slug: 'deploy-stage-{ name }'
-    vars:
-      tag: '{ branch }'
-      branch: '{ branch }'
-    stop: 60

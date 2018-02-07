@@ -18,14 +18,20 @@ exports.deploy = {
       if (deployLog[deployKey]) {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {
-          server.log(['docker-autobuild', 'info'], `${obj.name}/${obj.branch} already deploying.`);
-          return false;
+          server.log(['docker-autostart', 'info'], `${obj.name}/${obj.branch} already deploying.`);
+          return `Already deploying ${obj.name}/${obj.branch}`;
         }
       }
       deployLog[deployKey] = new Date().getTime();
-      const result = await server.req.post(obj.endpoint, { payload: obj.payload });
-
-      return result;
+      try {
+        const result = await server.req.post(obj.endpoint, { payload: obj.payload });
+        return result;
+      } catch (e) {
+        server.log(['docker-autostart', 'endpoint', 'error'], { error: e });
+        // reset deployLog
+        deployLog[deployKey] = 0;
+        return e;
+      }
     };
 
     let match = false;
@@ -38,13 +44,6 @@ exports.deploy = {
       match = true;
       const branch = host.replace(`${repo}-`, '');
       let service = hostData[repo];
-      if (typeof service === 'string') {
-        service = [
-          {
-            name: service
-          }
-        ];
-      }
 
       if (!Array.isArray(service)) {
         service = [service];
