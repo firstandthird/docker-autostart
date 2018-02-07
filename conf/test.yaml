@@ -1,0 +1,24 @@
+hosts:
+  apple:
+    name: 'apple-app'
+  pear:
+    -
+      name: 'pear-api'
+      payload:
+        image: "someimage"
+    -
+      name: 'pear-auth'
+      payload:
+        image: "someother"
+  peach:
+    name: 'peach-web'
+    payload:
+      extra: 'true'
+service:
+  endpoint: '{{ ENV.ENDPOINT }}'
+  payload:
+    slug: 'test-slug-{ name }'
+    vars:
+      tag: '{ branch }'
+      branch: '{ branch }'
+    stop: 60
