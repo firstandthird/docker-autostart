@@ -3,16 +3,7 @@ const aug = require('aug');
 
 const deployLog = {};
 
-exports.index = {
-  method: 'get',
-  path: '/favicon.ico',
-  handler(request, h) {
-    return '';
-  }
-};
-
-
-exports.debug = {
+exports.deploy = {
   method: 'get',
   path: '/{path*}',
   handler(request, h) {
@@ -23,7 +14,6 @@ exports.debug = {
     const hostData = request.server.settings.app.hosts;
 
     const deploy = async function(obj) {
-      // server.log(['debug'], obj);
       const deployKey = `${obj.name}_${obj.branch}`;
       if (deployLog[deployKey]) {
         const now = new Date().getTime() - (5 * 60 * 1000);

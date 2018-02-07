@@ -18,9 +18,10 @@
     "url": "https://github.com/firstandthird/docker-autostart/issues"
   },
   "dependencies": {
-    "hapi-req": "^2.0.0",
     "aug": "^2.0.0",
-    "rapptor": "^4.2.0"
+    "hapi-favicon": "^2.0.0",
+    "hapi-req": "^2.0.0",
+    "rapptor": "^5.2.0"
   },
   "devDependencies": {
     "eslint": "^4.15.0",
