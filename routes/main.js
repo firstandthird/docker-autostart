@@ -1,4 +1,5 @@
 const varson = require('varson');
+const clone = require('lodash.clonedeep');
 const aug = require('aug');
 
 const deployLog = {};
@@ -8,7 +9,6 @@ exports.deploy = {
   path: '/{path*}',
   async handler(request, h) {
     const server = request.server;
-
     const host = request.headers.host.split('.')[0];
     const defaultService = request.server.settings.app.service;
     const hostData = request.server.settings.app.hosts;
@@ -49,7 +49,7 @@ exports.deploy = {
       const proms = service.map(serv => {
         serv.branch = branch;
 
-        const serviceObject = aug({}, defaultService, serv);
+        const serviceObject = aug({}, clone(defaultService), clone(serv));
         const servicePayload = varson(serviceObject, {}, { start: '{', end: '}' });
         return deploy(servicePayload);
       });
