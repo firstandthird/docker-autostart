@@ -9,7 +9,7 @@
     "routes/**/*.js",
     "methods/**/*.js",
     "plugins/**/*.js",
-    "tests/**/*.js",
+    "test/**/*.js",
     "conf/*.yaml"
   ],
   "ext": "js yaml json"
