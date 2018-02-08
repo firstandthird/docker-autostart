@@ -10,11 +10,16 @@ exports.deploy = {
   async handler(request, h) {
     const server = request.server;
     const host = request.headers.host.split('.')[0];
-    const defaultService = request.server.settings.app.service;
+    const defaultService = request.server.settings.app.defaults || {};
     const hostData = request.server.settings.app.hosts;
 
     const deploy = async function(obj) {
-      const deployKey = `${obj.name}_${obj.branch}`;
+      if (!obj.endpoint) {
+        throw new Error('Service configurations must provide an endpoint.');
+      }
+      obj.payload = obj.payload || {};
+      const payloadUniq = request.server.methods.payloadId(obj.payload);
+      const deployKey = `${host}_${obj.endpoint}_${payloadUniq}`;
       if (deployLog[deployKey]) {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {

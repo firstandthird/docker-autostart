@@ -93,7 +93,51 @@ tap.test('multiple objects configured at once all called', async (t) => {
   t.end();
 });
 
-tap.todo('test with single endpoint object instead of array');
+tap.test('test with single endpoint object instead of array', async (t) => {
+  await start();
+
+  rapptor.server.settings.app.hosts = {
+    apple: {
+      payload: {
+        recipe: 'apple-pie',
+        ingredients: [
+          'crust',
+          '{ branch }'
+        ],
+        image: 'image:{ branch }'
+      },
+      endpoint: '/payload-app'
+    }
+  };
+
+  let hitPayload = false;
+  rapptor.server.route({
+    method: 'post',
+    path: '/payload-app',
+    handler(request, h) {
+      hitPayload = true;
+
+      t.same(request.payload, {
+        recipe: 'apple-pie',
+        ingredients: ['crust', 'branch-one'],
+        image: 'image:branch-one'
+      });
+
+      return { success: true };
+    }
+  });
+
+  const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'apple-branch-one.localhost' } });
+
+  t.equal(result.statusCode, 503);
+
+  await wait(700);
+
+  await stop();
+  t.ok(hitPayload);
+  t.end();
+});
+
 tap.todo('test deploying twice and having the second one not call endpoints');
 tap.todo('test host that doesnt match');
 tap.todo('test if endpoint fails');
