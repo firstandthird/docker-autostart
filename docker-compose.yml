@@ -15,7 +15,7 @@ web:
   environment:
     PORT: 8080
     FORCE_COLOR: 1
-    ENDPOINT: 'http://demo5774690.mockable.io/auto-dep'
+    ENDPOINT: 
   ports:
     - '8080'
   links:

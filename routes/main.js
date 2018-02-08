@@ -6,7 +6,7 @@ const deployLog = {};
 exports.deploy = {
   method: 'get',
   path: '/{path*}',
-  handler(request, h) {
+  async handler(request, h) {
     const server = request.server;
 
     const host = request.headers.host.split('.')[0];
@@ -34,14 +34,11 @@ exports.deploy = {
       }
     };
 
-    let match = false;
+    let repo = Object.keys(hostData).filter(key => host.startsWith(key));
 
-    Object.keys(hostData).forEach(repo => {
-      if (match || !host.startsWith(repo)) {
-        return;
-      }
+    if (repo.length) {
+      repo = repo[0];
 
-      match = true;
       const branch = host.replace(`${repo}-`, '');
       let service = hostData[repo];
 
@@ -57,10 +54,9 @@ exports.deploy = {
         return deploy(servicePayload);
       });
 
-      Promise.all(proms).then((vals) => {
-        server.log(['docker-autostart', 'info'], { message: 'deploying services', responses: vals });
-      });
-    });
+      const vals = await Promise.all(proms);
+      server.log(['docker-autostart', 'info'], { message: 'deploying services', responses: vals });
+    }
 
     return h.response('<html><head><title>Building...</title><meta http-equiv="refresh" content="20"></head><body><pre>building. please wait.</pre></body></html>').code(503);
   }

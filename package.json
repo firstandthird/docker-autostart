@@ -21,7 +21,8 @@
     "aug": "^2.0.0",
     "hapi-favicon": "^2.0.0",
     "hapi-req": "^2.0.0",
-    "rapptor": "^5.2.0"
+    "rapptor": "^5.2.0",
+    "varson": "^2.0.3"
   },
   "devDependencies": {
     "eslint": "^4.15.0",
