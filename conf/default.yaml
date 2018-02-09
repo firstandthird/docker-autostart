@@ -1,0 +1,5 @@
+plugins:
+  hapi-req:
+  hapi-favicon:
+  hapi-oppsy:
+    _enabled: false
