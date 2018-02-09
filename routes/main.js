@@ -20,11 +20,12 @@ exports.deploy = {
       obj.payload = obj.payload || {};
       const payloadUniq = request.server.methods.payloadId(obj.payload);
       const deployKey = `${host}_${obj.endpoint}_${payloadUniq}`;
+
       if (deployLog[deployKey]) {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {
-          server.log(['docker-autostart', 'info'], `${obj.name}/${obj.branch} already deploying.`);
-          return `Already deploying ${obj.name}/${obj.branch}`;
+          server.log(['docker-autostart', 'info'], `${host} already deploying`);
+          return `Already deploying ${host}`;
         }
       }
       deployLog[deployKey] = new Date().getTime();

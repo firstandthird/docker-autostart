@@ -138,6 +138,116 @@ tap.test('test with single endpoint object instead of array', async (t) => {
   t.end();
 });
 
-tap.todo('test deploying twice and having the second one not call endpoints');
-tap.todo('test host that doesnt match');
-tap.todo('test if endpoint fails');
+tap.test('test deploying twice and having the second one not call endpoints', async (t) => {
+  await start();
+
+  let correctLog = false;
+  rapptor.server.log = (tags, m) => {
+    if (m === 'carrot-bread already deploying') {
+      correctLog = true;
+    }
+  };
+
+  rapptor.server.settings.app.hosts = {
+    carrot: {
+      payload: {
+        recipe: '{ branch }-pie',
+      },
+      endpoint: '/payload-c'
+    }
+  };
+
+  let hitPayload = 0;
+  rapptor.server.route({
+    method: 'post',
+    path: '/payload-c',
+    handler(request, h) {
+      hitPayload++;
+      return { success: true };
+    }
+  });
+
+  const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'carrot-bread.localhost' } });
+
+  t.equal(result.statusCode, 503);
+
+  await wait(500);
+
+  const secondResult = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'carrot-bread.localhost' } });
+
+  t.equal(secondResult.statusCode, 503);
+
+  await(500);
+  await stop();
+  t.ok(correctLog);
+  t.equal(hitPayload, 1);
+  t.end();
+});
+
+tap.test('test host that doesnt match', async (t) => {
+  await start();
+
+  rapptor.server.settings.app.hosts = {
+    nothingburger: {
+      payload: {
+        recipe: '{ branch }-pie',
+      },
+      endpoint: '/payload-nota'
+    }
+  };
+
+  rapptor.server.route({
+    method: 'post',
+    path: '/payload-nota',
+    handler(request, h) {
+      throw new Error('Should not hit this endpoint');
+    }
+  });
+
+  const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'carrot-bread.localhost' } });
+
+  t.equal(result.statusCode, 503);
+
+  await wait(700);
+
+  await stop();
+  t.end();
+});
+
+tap.test('test if endpoint fails', async (t) => {
+  await start();
+
+  let correctLog = false;
+  rapptor.server.log = (tags, m) => {
+    if (tags.includes('error') && m.error && m.error.data === 'no burger' && m.error.output.statusCode === 500) {
+      correctLog = true;
+    }
+  };
+
+  rapptor.server.settings.app.hosts = {
+    uhoh: {
+      payload: {
+        recipe: 'tree-{ branch }',
+      },
+      endpoint: '/payload-nonexist'
+    }
+  };
+
+  rapptor.server.route({
+    method: 'post',
+    path: '/payload-nonexist',
+    handler(request, h) {
+      return h.response('no burger').code(500);
+    }
+  });
+
+  const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'uhoh-nueva.localhost' } });
+
+  t.equal(result.statusCode, 503);
+
+  await wait(700);
+
+  await stop();
+  t.ok(correctLog);
+  t.end();
+});
