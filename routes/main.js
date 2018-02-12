@@ -5,7 +5,7 @@ const aug = require('aug');
 const deployLog = {};
 
 exports.deploy = {
-  method: 'get',
+  method: '*',
   path: '/{path*}',
   async handler(request, h) {
     const server = request.server;
