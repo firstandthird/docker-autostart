@@ -1,3 +1,5 @@
+userAgentSkip:
+  - 'Slackbot'
 plugins:
   hapi-req:
   hapi-favicon:
