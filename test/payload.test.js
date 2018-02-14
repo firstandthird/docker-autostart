@@ -251,3 +251,39 @@ tap.test('test if endpoint fails', async (t) => {
   t.ok(correctLog);
   t.end();
 });
+
+tap.test('test user agent skip', async (t) => {
+  await start();
+
+  rapptor.server.settings.app.hosts = {
+    skippy: {
+      payload: {
+        recipe: 'tree-{ branch }',
+      },
+      endpoint: '/payload-to-skip'
+    }
+  };
+
+  rapptor.server.settings.app.userAgentSkip = ['Bad User'];
+
+  let payloadSkipped = true;
+  rapptor.server.route({
+    method: 'post',
+    path: '/payload-to-skip',
+    handler(request, h) {
+      payloadSkipped = false;
+      return { success: 1 };
+    }
+  });
+
+  const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'uhoh-nueva.localhost', 'user-agent': 'Bad User Agent' } });
+
+  t.equal(result.statusCode, 200);
+  t.equal(result.payload, 'User agent skip');
+
+  await wait(700);
+
+  await stop();
+  t.ok(payloadSkipped);
+  t.end();
+});

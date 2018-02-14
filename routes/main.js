@@ -13,6 +13,22 @@ exports.deploy = {
     const defaultService = request.server.settings.app.defaults || {};
     const hostData = request.server.settings.app.hosts;
 
+    server.log(['docker-autostart', 'notice'], { host: request.headers.host, userAgent: request.headers['user-agent'] });
+
+    if (request.server.settings.app.userAgentSkip) {
+      const ua = request.headers['user-agent'];
+      let skip = false;
+      request.server.settings.app.userAgentSkip.forEach(skipAgent => {
+        if (ua.includes(skipAgent)) {
+          skip = true;
+        }
+      });
+
+      if (skip) {
+        return 'User agent skip';
+      }
+    }
+
     const deploy = async function(obj) {
       if (!obj.endpoint) {
         throw new Error('Service configurations must provide an endpoint.');
