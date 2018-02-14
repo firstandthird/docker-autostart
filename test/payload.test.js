@@ -219,7 +219,7 @@ tap.test('test if endpoint fails', async (t) => {
 
   let correctLog = false;
   rapptor.server.log = (tags, m) => {
-    if (tags.includes('error') && m.error && m.error.data === 'no burger' && m.error.output.statusCode === 500) {
+    if (tags.includes('error') && m.error && m.error.output.statusCode === 500) {
       correctLog = true;
     }
   };
@@ -229,7 +229,7 @@ tap.test('test if endpoint fails', async (t) => {
       payload: {
         recipe: 'tree-{ branch }',
       },
-      endpoint: '/payload-nonexist'
+      endpoint: 'http://localhost:8080/payload-nonexist'
     }
   };
 
@@ -237,7 +237,7 @@ tap.test('test if endpoint fails', async (t) => {
     method: 'post',
     path: '/payload-nonexist',
     handler(request, h) {
-      return h.response('no burger').code(500);
+      return h.response({ error: true }).code(500);
     }
   });
 
