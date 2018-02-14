@@ -13,7 +13,6 @@ exports.deploy = {
     const defaultService = request.server.settings.app.defaults || {};
     const hostData = request.server.settings.app.hosts;
 
-    server.log(['docker-autostart', 'notice'], { host: request.headers.host, userAgent: request.headers['user-agent'] });
 
     if (request.server.settings.app.userAgentSkip) {
       const ua = request.headers['user-agent'];
@@ -28,6 +27,8 @@ exports.deploy = {
         return 'User agent skip';
       }
     }
+
+    server.log(['docker-autostart', 'notice'], { host: request.headers.host, userAgent: request.headers['user-agent'] });
 
     const deploy = async function(obj) {
       if (!obj.endpoint) {
