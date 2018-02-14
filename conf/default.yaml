@@ -1,5 +1,11 @@
+userAgentSkip:
+  - 'Slackbot'
 plugins:
   hapi-req:
   hapi-favicon:
+  hapi-robots:
+    envs:
+      production:
+        '*': '/'
   hapi-oppsy:
     _enabled: false

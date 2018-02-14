@@ -219,7 +219,7 @@ tap.test('test if endpoint fails', async (t) => {
 
   let correctLog = false;
   rapptor.server.log = (tags, m) => {
-    if (tags.includes('error') && m.error && m.error.data === 'no burger' && m.error.output.statusCode === 500) {
+    if (tags.includes('error') && m.error && m.error.output.statusCode === 500) {
       correctLog = true;
     }
   };
@@ -229,7 +229,7 @@ tap.test('test if endpoint fails', async (t) => {
       payload: {
         recipe: 'tree-{ branch }',
       },
-      endpoint: '/payload-nonexist'
+      endpoint: 'http://localhost:8080/payload-nonexist'
     }
   };
 
@@ -237,7 +237,7 @@ tap.test('test if endpoint fails', async (t) => {
     method: 'post',
     path: '/payload-nonexist',
     handler(request, h) {
-      return h.response('no burger').code(500);
+      return h.response({ error: true }).code(500);
     }
   });
 
@@ -249,5 +249,41 @@ tap.test('test if endpoint fails', async (t) => {
 
   await stop();
   t.ok(correctLog);
+  t.end();
+});
+
+tap.test('test user agent skip', async (t) => {
+  await start();
+
+  rapptor.server.settings.app.hosts = {
+    skippy: {
+      payload: {
+        recipe: 'tree-{ branch }',
+      },
+      endpoint: '/payload-to-skip'
+    }
+  };
+
+  rapptor.server.settings.app.userAgentSkip = ['Bad User'];
+
+  let payloadSkipped = true;
+  rapptor.server.route({
+    method: 'post',
+    path: '/payload-to-skip',
+    handler(request, h) {
+      payloadSkipped = false;
+      return { success: 1 };
+    }
+  });
+
+  const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'uhoh-nueva.localhost', 'user-agent': 'Bad User Agent' } });
+
+  t.equal(result.statusCode, 200);
+  t.equal(result.payload, 'User agent skip');
+
+  await wait(700);
+
+  await stop();
+  t.ok(payloadSkipped);
   t.end();
 });
