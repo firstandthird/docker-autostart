@@ -3,5 +3,6 @@ userAgentSkip:
 plugins:
   hapi-req:
   hapi-favicon:
+  hapi-robots:
   hapi-oppsy:
     _enabled: false
