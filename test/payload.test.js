@@ -219,7 +219,7 @@ tap.test('test if endpoint fails', async (t) => {
 
   let correctLog = false;
   rapptor.server.log = (tags, m) => {
-    if (tags.includes('error') && m.error && m.error.output.statusCode === 500) {
+    if (tags.includes('error') && m.error && m.error.statusCode === 500) {
       correctLog = true;
     }
   };
