@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "aug": "^2.0.0",
+    "boom": "^7.1.1",
     "hapi-favicon": "^2.0.0",
     "hapi-req": "^2.0.0",
     "hapi-robots": "^3.0.0",

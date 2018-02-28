@@ -1,6 +1,7 @@
 const varson = require('varson');
 const clone = require('lodash.clonedeep');
 const aug = require('aug');
+const Boom = require('boom');
 
 const deployLog = {};
 
@@ -42,13 +43,13 @@ exports.deploy = {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {
           server.log(['docker-autostart', 'info'], `${host} already deploying`);
-          return `Already deploying ${host}`;
+          return { endpoint: obj.endpoint, display: `Already deploying ${host}` };
         }
       }
       deployLog[deployKey] = new Date().getTime();
       try {
         const result = await server.req.post(obj.endpoint, { payload: obj.payload });
-        return result;
+        return { success: result, display: 'success', endpoint: obj.endpoint, payload: obj.payload };
       } catch (e) {
         let error = e;
         if (e.isBoom) {
@@ -57,11 +58,17 @@ exports.deploy = {
         server.log(['docker-autostart', 'endpoint', 'error'], { error, endpoint: obj.endpoint, payload: obj.payload });
         // reset deployLog
         deployLog[deployKey] = 0;
-        return e;
+        return { error, endpoint: obj.endpoint, payload: obj.payload };
       }
     };
 
     let repo = Object.keys(hostData).filter(key => host.startsWith(key));
+
+    if (!repo.length) {
+      throw Boom.notFound('repo not found');
+    }
+
+    let vals;
 
     if (repo.length) {
       repo = repo[0];
@@ -81,10 +88,16 @@ exports.deploy = {
         return deploy(servicePayload);
       });
 
-      const vals = await Promise.all(proms);
+      vals = await Promise.all(proms);
       server.log(['docker-autostart', 'info'], { message: 'deploying services', responses: vals });
     }
 
-    return h.response('<html><head><title>Building...</title><meta http-equiv="refresh" content="20"></head><body><pre>building. please wait.</pre></body></html>').code(503);
+    const responseTable = [];
+    vals.forEach(val => {
+      const line = `${val.endpoint} => ${val.error ? val.error.statusCode : val.display}`;
+      responseTable.push(line);
+    });
+
+    return h.response(`<html><head><title>Building...</title><meta http-equiv="refresh" content="20"></head><body><pre>building. please wait.\n\n${responseTable.join('\n')}</pre></body></html>`).code(503);
   }
 };

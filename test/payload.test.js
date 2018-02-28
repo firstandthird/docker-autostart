@@ -206,7 +206,7 @@ tap.test('test host that doesnt match', async (t) => {
 
   const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'carrot-bread.localhost' } });
 
-  t.equal(result.statusCode, 503);
+  t.equal(result.statusCode, 404);
 
   await wait(700);
 
@@ -243,6 +243,7 @@ tap.test('test if endpoint fails', async (t) => {
 
   const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'uhoh-nueva.localhost' } });
 
+  t.ok(result.payload.includes('http://localhost:8080/payload-nonexist => 500'));
   t.equal(result.statusCode, 503);
 
   await wait(700);
