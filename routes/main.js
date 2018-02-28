@@ -50,7 +50,11 @@ exports.deploy = {
         const result = await server.req.post(obj.endpoint, { payload: obj.payload });
         return result;
       } catch (e) {
-        server.log(['docker-autostart', 'endpoint', 'error'], { error: e });
+        let error = e;
+        if (e.isBoom) {
+          error = e.output;
+        }
+        server.log(['docker-autostart', 'endpoint', 'error'], { error, endpoint: obj.endpoint, payload: obj.payload });
         // reset deployLog
         deployLog[deployKey] = 0;
         return e;
