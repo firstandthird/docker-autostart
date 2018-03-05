@@ -94,7 +94,7 @@ exports.deploy = {
 
     const responseTable = [];
     vals.forEach(val => {
-      const line = `${val.endpoint} => ${val.error ? val.error.statusCode : val.display}`;
+      const line = `${val.error ? val.error.statusCode : val.display}`;
       responseTable.push(line);
     });
 
