@@ -14,7 +14,7 @@ exports.deploy = {
     const host = request.headers.host.split('.')[0];
     const defaultService = request.server.settings.app.defaults || {};
     const hostData = request.server.settings.app.hosts;
-
+    const redirectCount = (request.server.settings.app.redirectCount / 1);
 
     if (request.server.settings.app.userAgentSkip) {
       const ua = request.headers['user-agent'];
@@ -100,9 +100,9 @@ exports.deploy = {
 
     let metaTag = '';
 
-    if (hostLog[host] < 5) {
+    if (hostLog[host] < redirectCount) {
       hostLog[host]++;
-      metaTag = '<meta http-equiv="refresh" content="5">';
+      metaTag = '<meta http-equiv="refresh" content="30">';
     }
 
     return h.response(`<html><head><title>Building...</title>${metaTag}</head><body><pre>building. please wait.</pre></body></html>`).code(503);
