@@ -4,6 +4,7 @@ const aug = require('aug');
 const Boom = require('boom');
 
 const deployLog = {};
+const hostLog = {};
 
 exports.deploy = {
   method: '*',
@@ -42,10 +43,11 @@ exports.deploy = {
       if (deployLog[deployKey]) {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {
-          server.log(['docker-autostart', 'info'], `${host} already deploying`);
           return { endpoint: obj.endpoint, display: `Already deploying ${host}` };
         }
       }
+      // reset the hostlog and deploylog
+      hostLog[host] = 0;
       deployLog[deployKey] = new Date().getTime();
       try {
         const result = await server.req.post(obj.endpoint, { payload: obj.payload });
@@ -92,12 +94,17 @@ exports.deploy = {
       server.log(['docker-autostart', 'info'], { message: 'deploying services', responses: vals });
     }
 
-    const responseTable = [];
-    vals.forEach(val => {
-      const line = `${val.endpoint} => ${val.error ? val.error.statusCode : val.display}`;
-      responseTable.push(line);
-    });
+    if (!hostLog[host]) {
+      hostLog[host] = 0;
+    }
 
-    return h.response(`<html><head><title>Building...</title><meta http-equiv="refresh" content="20"></head><body><pre>building. please wait.\n\n${responseTable.join('\n')}</pre></body></html>`).code(503);
+    let metaTag = '';
+
+    if (hostLog[host] < 5) {
+      hostLog[host]++;
+      metaTag = '<meta http-equiv="refresh" content="5">';
+    }
+
+    return h.response(`<html><head><title>Building...</title>${metaTag}</head><body><pre>building. please wait.</pre></body></html>`).code(503);
   }
 };
