@@ -44,10 +44,11 @@ exports.deploy = {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {
           return { endpoint: obj.endpoint, display: `Already deploying ${host}` };
+        } else {
+          // reset the hostlog and deploylog
+          hostLog[host] = 0;
         }
       }
-      // reset the hostlog and deploylog
-      hostLog[host] = 0;
       deployLog[deployKey] = new Date().getTime();
       try {
         const result = await server.req.post(obj.endpoint, { payload: obj.payload });
@@ -98,13 +99,12 @@ exports.deploy = {
       hostLog[host] = 0;
     }
 
-    let metaTag = '';
-
-    if (hostLog[host] < redirectCount) {
-      hostLog[host]++;
-      metaTag = '<meta http-equiv="refresh" content="30">';
+    if (hostLog[host] >= redirectCount) {
+      return h.response(`<html><head><title>Building failed....</title></head><body><pre>building failed. please check logs...</pre></body></html>`).code(503);
     }
 
-    return h.response(`<html><head><title>Building...</title>${metaTag}</head><body><pre>building. please wait.</pre></body></html>`).code(503);
+    hostLog[host]++;
+
+    return h.response(`<html><head><title>Building...</title><meta http-equiv="refresh" content="30"></head><body><pre>building. please wait. ${hostLog[host]}</pre></body></html>`).code(503);
   }
 };
