@@ -143,7 +143,7 @@ tap.test('test deploying twice and having the second one not call endpoints', as
 
   let correctLog = false;
   rapptor.server.log = (tags, m) => {
-    if (m === 'carrot-bread already deploying') {
+    if (m.responses && m.responses[0] && m.responses[0].display === 'Already deploying carrot-bread') {
       correctLog = true;
     }
   };
@@ -243,7 +243,6 @@ tap.test('test if endpoint fails', async (t) => {
 
   const result = await rapptor.server.inject({ url: '/', method: 'get', headers: { host: 'uhoh-nueva.localhost' } });
 
-  t.ok(result.payload.includes('http://localhost:8080/payload-nonexist => 500'));
   t.equal(result.statusCode, 503);
 
   await wait(700);

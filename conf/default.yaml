@@ -1,5 +1,6 @@
 userAgentSkip:
   - 'Slackbot'
+redirectCount: '{{ ENV.REDIRECT_COUNT || 10 }}'
 plugins:
   hapi-req:
   hapi-favicon:

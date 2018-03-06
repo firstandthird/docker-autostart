@@ -4,6 +4,7 @@ const aug = require('aug');
 const Boom = require('boom');
 
 const deployLog = {};
+const hostLog = {};
 
 exports.deploy = {
   method: '*',
@@ -13,7 +14,7 @@ exports.deploy = {
     const host = request.headers.host.split('.')[0];
     const defaultService = request.server.settings.app.defaults || {};
     const hostData = request.server.settings.app.hosts;
-
+    const redirectCount = (request.server.settings.app.redirectCount / 1);
 
     if (request.server.settings.app.userAgentSkip) {
       const ua = request.headers['user-agent'];
@@ -42,8 +43,10 @@ exports.deploy = {
       if (deployLog[deployKey]) {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {
-          server.log(['docker-autostart', 'info'], `${host} already deploying`);
           return { endpoint: obj.endpoint, display: `Already deploying ${host}` };
+        } else {
+          // reset the hostlog and deploylog
+          hostLog[host] = 0;
         }
       }
       deployLog[deployKey] = new Date().getTime();
@@ -92,12 +95,16 @@ exports.deploy = {
       server.log(['docker-autostart', 'info'], { message: 'deploying services', responses: vals });
     }
 
-    const responseTable = [];
-    vals.forEach(val => {
-      const line = `${val.error ? val.error.statusCode : val.display}`;
-      responseTable.push(line);
-    });
+    if (!hostLog[host]) {
+      hostLog[host] = 0;
+    }
 
-    return h.response(`<html><head><title>Building...</title><meta http-equiv="refresh" content="20"></head><body><pre>building. please wait.\n\n${responseTable.join('\n')}</pre></body></html>`).code(503);
+    if (hostLog[host] >= redirectCount) {
+      return h.response(`<html><head><title>Building failed....</title></head><body><pre>building failed. please check logs...</pre></body></html>`).code(503);
+    }
+
+    hostLog[host]++;
+
+    return h.response(`<html><head><title>Building...</title><meta http-equiv="refresh" content="30"></head><body><pre>building. please wait. ${hostLog[host]}</pre></body></html>`).code(503);
   }
 };
