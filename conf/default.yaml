@@ -1,5 +1,6 @@
 userAgentSkip:
   - 'Slackbot'
+  - 'Slack-ImgProxy'
 redirectCount: '{{ ENV.REDIRECT_COUNT || 10 }}'
 plugins:
   hapi-req:
