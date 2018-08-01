@@ -15,23 +15,8 @@ exports.deploy = {
     const defaultService = request.server.settings.app.defaults || {};
     const hostData = request.server.settings.app.hosts;
     const redirectCount = (request.server.settings.app.redirectCount / 1);
-    if (request.query._repo && request.query.firstName !== '') {
-      throw Boom.badRequest('whoops');
-    }
 
-    if (request.server.settings.app.userAgentSkip) {
-      const ua = request.headers['user-agent'];
-      let skip = false;
-      request.server.settings.app.userAgentSkip.forEach(skipAgent => {
-        if (ua.includes(skipAgent)) {
-          skip = true;
-        }
-      });
-
-      if (skip) {
-        return 'User agent skip';
-      }
-    }
+    const doBuild = request.headers['x-build'] === '1';
 
     server.log(['docker-autostart', 'notice'], { host: request.headers.host, userAgent: request.headers['user-agent'] });
 
@@ -75,7 +60,7 @@ exports.deploy = {
 
     let vals;
 
-    if (request.query._repo === repo[0]) {
+    if (doBuild) {
       repo = repo[0];
 
       const branch = host.replace(`${repo}-`, '');
@@ -107,11 +92,41 @@ exports.deploy = {
 
     hostLog[host]++;
 
-    let respString = `<html><head><title>Ready to build.</title></head><body><div style="margin:auto;width:900px;">Are you ready to build ${repo}? <form style="display:inline-block;" action=""><input type="text" name="firstName"  value="" style="width:0;height:0;display:block;margin:0;padding:0;"/><input type="hidden" name="_repo" value="${repo}"><button type="submit">Build</button></form></div></body></html>`;
-
-    if (request.query._repo === repo) {
-      respString = `<html><head><title>Building...</title><meta http-equiv="refresh" content="30"></head><body><pre>building. please wait. ${hostLog[host]}</pre></body></html>`;
+    if (doBuild) {
+      return { success: 1 };
     }
+
+    const respString = `
+      <html>
+        <head>
+          <title>Ready to build.</title>
+        </head>
+        <body>
+          <div id="container" style="margin:auto;width:900px;">
+            Are you ready to build ${repo}? <button id="build">Build</button>
+          </div>
+          <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+          <script type="text/javascript">
+            $.when( $.ready ).then(function() {
+              $("button#build").click(function(e) {
+                var self = e.currentTarget;
+                $.ajax({
+                  method: 'GET',
+                  url: '',
+                  headers: {
+                    'x-build': '1'
+                  }
+                }).done(function() {
+                  $(self).hide();
+                  $("#container").append(' <strong>deploying...</strong>');
+                });
+                return false;
+              });
+            });
+          </script>
+        </body>
+      </html>`;
+
     return h.response(respString).code(503);
   }
 };
