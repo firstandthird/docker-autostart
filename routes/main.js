@@ -15,6 +15,9 @@ exports.deploy = {
     const defaultService = request.server.settings.app.defaults || {};
     const hostData = request.server.settings.app.hosts;
     const redirectCount = (request.server.settings.app.redirectCount / 1);
+    if (request.query._repo && request.query.firstName !== '') {
+      throw Boom.badRequest('whoops');
+    }
 
     if (request.server.settings.app.userAgentSkip) {
       const ua = request.headers['user-agent'];
@@ -44,10 +47,9 @@ exports.deploy = {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {
           return { endpoint: obj.endpoint, display: `Already deploying ${host}` };
-        } else {
-          // reset the hostlog and deploylog
-          hostLog[host] = 0;
         }
+        // reset the hostlog and deploylog
+        hostLog[host] = 0;
       }
       deployLog[deployKey] = new Date().getTime();
       try {
@@ -73,7 +75,7 @@ exports.deploy = {
 
     let vals;
 
-    if (repo.length) {
+    if (request.query._repo === repo[0]) {
       repo = repo[0];
 
       const branch = host.replace(`${repo}-`, '');
@@ -100,11 +102,16 @@ exports.deploy = {
     }
 
     if (hostLog[host] >= redirectCount) {
-      return h.response(`<html><head><title>Building failed....</title></head><body><pre>building failed. please check logs...</pre></body></html>`).code(503);
+      return h.response('<html><head><title>Building failed....</title></head><body><pre>building failed. please check logs...</pre></body></html>').code(503);
     }
 
     hostLog[host]++;
 
-    return h.response(`<html><head><title>Building...</title><meta http-equiv="refresh" content="30"></head><body><pre>building. please wait. ${hostLog[host]}</pre></body></html>`).code(503);
+    let respString = `<html><head><title>Ready to build.</title></head><body><div style="margin:auto;width:900px;">Are you ready to build ${repo}? <form style="display:inline-block;" action=""><input type="text" name="firstName"  value="" style="width:0;height:0;display:block;margin:0;padding:0;"/><input type="hidden" name="_repo" value="${repo}"><button type="submit">Build</button></form></div></body></html>`;
+
+    if (request.query._repo === repo) {
+      respString = `<html><head><title>Building...</title><meta http-equiv="refresh" content="30"></head><body><pre>building. please wait. ${hostLog[host]}</pre></body></html>`;
+    }
+    return h.response(respString).code(503);
   }
 };
