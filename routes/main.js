@@ -16,19 +16,7 @@ exports.deploy = {
     const hostData = request.server.settings.app.hosts;
     const redirectCount = (request.server.settings.app.redirectCount / 1);
 
-    if (request.server.settings.app.userAgentSkip) {
-      const ua = request.headers['user-agent'];
-      let skip = false;
-      request.server.settings.app.userAgentSkip.forEach(skipAgent => {
-        if (ua.includes(skipAgent)) {
-          skip = true;
-        }
-      });
-
-      if (skip) {
-        return 'User agent skip';
-      }
-    }
+    const doBuild = request.headers['x-build'] === '1';
 
     server.log(['docker-autostart', 'notice'], { host: request.headers.host, userAgent: request.headers['user-agent'] });
 
@@ -44,10 +32,9 @@ exports.deploy = {
         const now = new Date().getTime() - (5 * 60 * 1000);
         if (now < deployLog[deployKey]) {
           return { endpoint: obj.endpoint, display: `Already deploying ${host}` };
-        } else {
-          // reset the hostlog and deploylog
-          hostLog[host] = 0;
         }
+        // reset the hostlog and deploylog
+        hostLog[host] = 0;
       }
       deployLog[deployKey] = new Date().getTime();
       try {
@@ -73,7 +60,7 @@ exports.deploy = {
 
     let vals;
 
-    if (repo.length) {
+    if (doBuild) {
       repo = repo[0];
 
       const branch = host.replace(`${repo}-`, '');
@@ -100,11 +87,46 @@ exports.deploy = {
     }
 
     if (hostLog[host] >= redirectCount) {
-      return h.response(`<html><head><title>Building failed....</title></head><body><pre>building failed. please check logs...</pre></body></html>`).code(503);
+      return h.response('<html><head><title>Building failed....</title></head><body><pre>building failed. please check logs...</pre></body></html>').code(503);
     }
 
     hostLog[host]++;
 
-    return h.response(`<html><head><title>Building...</title><meta http-equiv="refresh" content="30"></head><body><pre>building. please wait. ${hostLog[host]}</pre></body></html>`).code(503);
+    if (doBuild) {
+      return { success: 1 };
+    }
+
+    const respString = `
+      <html>
+        <head>
+          <title>Ready to build.</title>
+        </head>
+        <body>
+          <div id="container" style="margin:auto;width:900px;">
+            Are you ready to build ${repo}? <button id="build">Build</button>
+          </div>
+          <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+          <script type="text/javascript">
+            $.when( $.ready ).then(function() {
+              $("button#build").click(function(e) {
+                var self = e.currentTarget;
+                $.ajax({
+                  method: 'GET',
+                  url: '',
+                  headers: {
+                    'x-build': '1'
+                  }
+                }).done(function() {
+                  $(self).hide();
+                  $("#container").append(' <strong>deploying...</strong>');
+                });
+                return false;
+              });
+            });
+          </script>
+        </body>
+      </html>`;
+
+    return h.response(respString).code(503);
   }
 };
