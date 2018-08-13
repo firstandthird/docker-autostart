@@ -17,7 +17,7 @@ exports.deploy = {
     const redirectCount = (request.server.settings.app.redirectCount / 1);
 
     const doBuild = request.headers['x-build'] === '1';
-
+    const monitoring = request.query.monitor === '1';
     server.log(['docker-autostart', 'notice'], { host: request.headers.host, userAgent: request.headers['user-agent'] });
 
     const deploy = async function(obj) {
@@ -37,6 +37,7 @@ exports.deploy = {
         hostLog[host] = 0;
       }
       deployLog[deployKey] = new Date().getTime();
+
       try {
         const result = await server.req.post(obj.endpoint, { payload: obj.payload });
         return { success: result, display: 'success', endpoint: obj.endpoint, payload: obj.payload };
@@ -96,6 +97,10 @@ exports.deploy = {
       return { success: 1 };
     }
 
+    if (monitoring) {
+      return `<html><head><title>Building...</title><meta http-equiv="refresh" content="30"></head><body><div style="width:900px;margin:auto;">Building. please wait. ${hostLog[host]}</div></body></html>`;
+    }
+
     const respString = `
       <html>
         <head>
@@ -119,6 +124,9 @@ exports.deploy = {
                 }).done(function() {
                   $(self).hide();
                   $("#container").append(' <strong>deploying...</strong>');
+                  setTimeout(function() {
+                    window.location = '?monitor=1'
+                  }, 5000);
                 });
                 return false;
               });
