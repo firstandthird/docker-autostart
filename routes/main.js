@@ -25,18 +25,6 @@ exports.deploy = {
         throw new Error('Service configurations must provide an endpoint.');
       }
       obj.payload = obj.payload || {};
-      const payloadUniq = request.server.methods.payloadId(obj.payload);
-      const deployKey = `${host}_${obj.endpoint}_${payloadUniq}`;
-
-      if (deployLog[deployKey]) {
-        const now = new Date().getTime() - (5 * 60 * 1000);
-        if (now < deployLog[deployKey]) {
-          return { endpoint: obj.endpoint, display: `Already deploying ${host}` };
-        }
-        // reset the hostlog and deploylog
-        hostLog[host] = 0;
-      }
-      deployLog[deployKey] = new Date().getTime();
 
       try {
         const result = await server.req.post(obj.endpoint, { payload: obj.payload });
@@ -47,8 +35,6 @@ exports.deploy = {
           error = e.output;
         }
         server.log(['docker-autostart', 'endpoint', 'error'], { error, endpoint: obj.endpoint, payload: obj.payload });
-        // reset deployLog
-        deployLog[deployKey] = 0;
         return { error, endpoint: obj.endpoint, payload: obj.payload };
       }
     };
@@ -87,6 +73,14 @@ exports.deploy = {
       hostLog[host] = 0;
     }
 
+    if (!deployLog[host]) {
+      deployLog[host] = new Date().getTime();
+    }
+    const now = new Date().getTime() - (5 * 60 * 1000);
+    if (now > deployLog[host]) {
+      deployLog[host] = new Date().getTime();
+      hostLog[host] = 0;
+    }
     if (hostLog[host] >= redirectCount) {
       return h.response('<html><head><title>Building failed....</title></head><body><pre>building failed. please check logs...</pre></body></html>').code(503);
     }
