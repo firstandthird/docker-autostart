@@ -76,22 +76,25 @@ exports.deploy = {
     if (!deployLog[host]) {
       deployLog[host] = new Date().getTime();
     }
+
     const now = new Date().getTime() - (5 * 60 * 1000);
-    if (now > deployLog[host]) {
+    if (now > deployLog[host] || request.query.force === '1') {
+      // Resets the logs
       deployLog[host] = new Date().getTime();
       hostLog[host] = 0;
     }
-    if (hostLog[host] >= redirectCount) {
-      return h.response('<html><head><title>Building failed....</title></head><body><pre>building failed. please check logs...</pre></body></html>').code(503);
-    }
 
-    hostLog[host]++;
+    if (hostLog[host] >= redirectCount) {
+      const timeAgo = (new Date().getTime() - deployLog[host]) / 1000;
+      return h.response(`<html><head><title>Building failed....</title></head><body><pre>Failed build - started ${timeAgo / 60} minutes ago. please check logs...</pre></body></html>`).code(503);
+    }
 
     if (doBuild) {
       return { success: 1 };
     }
 
     if (monitoring) {
+      hostLog[host]++;
       return `<html><head><title>Building...</title><meta http-equiv="refresh" content="30"></head><body><div style="width:900px;margin:auto;">Building. please wait. ${hostLog[host]}</div></body></html>`;
     }
 
@@ -130,5 +133,14 @@ exports.deploy = {
       </html>`;
 
     return h.response(respString).code(503);
+  }
+};
+
+
+exports.logs = {
+  method: 'GET',
+  path: '/_logs',
+  handler(reuest, h) {
+    return { deployLog, hostLog };
   }
 };
